@@ -18,5 +18,9 @@
   "homepage": "https://github.com/djackson1/advent-of-code#readme",
   "dependencies": {
     "babel-register": "^6.26.0"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^5.2.0"
   }
 }
