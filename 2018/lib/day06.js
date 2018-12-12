@@ -1,118 +1,122 @@
 const path = require('path')
 const { parseFile } = require(path.resolve(__dirname, '../utilities/files'))
 
-const drawGrid = (grid, { x1, y1, x2, y2}) => {
-  for(let y = y1; y < y2; y++){
-    let str = ''
-    for(let x = x1; x < x2; x++){
-      const key = `${x}.${y}`
-      if(grid[key]){
-        const val = grid[key]
-
-        if(val) {
-          // console.log('v',)
-          str += String(val)
-        }
-
-        // if(val === )
+const drawGrid = grid => {
+  for(let y = 0; y <= grid.maxY; y++){
+    let s = ''
+    for(let x = 0; x <= grid.maxX; x++){
+      const item = grid[`${x}.${y}`]
+      if(item){
+        s += String(item)
       } else {
-        str += '.'
+        s += '.'
       }
-      //  && grid[x][y] !== 'X') {
-      //   console.log('.')
-      // }
     }
     
-    console.log(str)
+    console.log(s)
   }
 }
 
-const a = (coordsString) => {
-// console.log('coordsString', coordsString)
+const getClosestPoint = ({ x: x2, y: y2 }, points) => {
+  const distanceToPoints = {}
 
-  const coordXYs = coordsString.split('\n')
-// console.log('coordXYs', coordXYs)
+  points.forEach(({ x: x1, y: y1, id }) => {
+    const x = Math.abs(x2 - x1)
+    const y = Math.abs(y2 - y1)
+    const dist = x + y
 
-  let locationsToTest = coordXYs
-    .map((str, id) => {
-      const coords = str.split(',').map(s => s.trim())
-      return { x: Number(coords[0]), y: Number(coords[1]), id: Number(id + 1) }
-    })
-  console.log('locationsToTest', locationsToTest)
+    if(!distanceToPoints[dist]) distanceToPoints[dist] = []
+    distanceToPoints[dist].push(id)
+  })
 
-  const grid = {}
+  const lowestDist = Object.entries(distanceToPoints)[0]
 
-  const idsWithSquares = {}
+  if(lowestDist[1].length === 1) { 
+    return lowestDist[1]
+  } 
 
-  // iterate
-  for(let i = 0; i < 1000; i++) {
-    console.log('loop', i)
-    const newGrid = {}
-    const newLocObj = {}
-    const newLocationsToTest = []
+  return lowestDist[1].length === 1
+    ? lowestDist[1]
+    : -1
+}
 
-    locationsToTest.forEach(({ x, y, id }) => {
+const fillGrid = grid => {
+  for(let y = 0; y <= grid.maxY; y++){
+    for(let x = 0; x <= grid.maxX; x++){
       const key = `${x}.${y}`
+      const item = grid[key]
 
-      // if the square was free before last iteration
-      if(!grid[key]) {
-        if(newGrid[key] && newGrid[key] !== id) {
-          // someone elses square
-        } else {
-          newGrid[key] = id
+      if(!item) {
+        const closestIdToPoint = getClosestPoint({ x, y }, grid.points)
 
-          newLocObj[`${x-1}.${y}`] = id
-          newLocObj[`${x+1}.${y}`] = id
-          newLocObj[`${x}.${y+1}`] = id
-          newLocObj[`${x}.${y-1}`] = id
-
-          // newLocationsToTest.push({ x: x - 1, y, id })
-          // newLocationsToTest.push({ x: x + 1, y, id })
-          // newLocationsToTest.push({ x, y: y + 1, id })
-          // newLocationsToTest.push({ x, y: y  - 1, id })
+        if(closestIdToPoint !== -1){
+          grid[key] = closestIdToPoint
+          grid.pointCount[closestIdToPoint]++
         }
       }
-    })
-
-    Object
-      .entries(newGrid)
-      .forEach(([key, id]) => {
-        grid[key] = id
-
-        if(!idsWithSquares[id]) idsWithSquares[id] = 0
-        idsWithSquares[id]++
-      })
-    
-    locationsToTest = newLocationsToTest
+    }
   }
 
-  
-  drawGrid(grid, { x1: 0, y1: 0, x2: 10, y2: 10 })
-  
-  console.log('idsWithSquares', idsWithSquares)
+  return grid
+}
 
-  const validAreas = locationsToTest
-    .forEach(({ id }) => (delete idsWithSquares[id]))
+const mostPointsInGridWithEdgesRemoved = grid => {
+  const pointsToRemove = {}
 
-  
-  const x = Object
-    .entries(idsWithSquares)
-    .sort(([ka, va], [kb, vb]) => vb - va )//[0][1]
+  for(let x = 0; x <= grid.maxX; x++){ 
+    const key1 = `${x}.0`
+    const point1 = grid[key1]
+    const key2 = `${x}.${grid.maxY}`
+    const point2 = grid[key2]
 
-  console.log('x', x)
-    // .map(({ id }) => id)
-    // .reduce((acc, id) => {
-    //   if(!acc.includes(id)) acc = acc.concat(id)
-    //   return acc
-    // }, [])
+    pointsToRemove[point1] = true
+    pointsToRemove[point2] = true
+  }
 
-    // .reduce((acc, id) => {
-    //   if(!acc[id]) acc[id] = true
-    //   return acc
-    // }, {})
-    // // .entries()
+  for(let y = 0; y <= grid.maxY; y++){ 
+    const key1 = `0.${y}`
+    const point1 = grid[key1]
+    const key2 = `${grid.maxX}.${y}`
+    const point2 = grid[key2]
 
-  return x
+    pointsToRemove[point1] = true
+    pointsToRemove[point2] = true
+  }
+
+  Object.keys(pointsToRemove).forEach(p => {
+    delete grid.pointCount[p]
+  })
+
+  return Object
+    .entries(grid.pointCount)
+    .sort((a, b) => b[1] - a[1])[0][1]
+}
+
+const a = (coordsString) => {
+  const grid = {
+    maxX: 0,
+    maxY: 0,
+    points: [],
+    pointCount: {}
+  }
+
+  coordsString
+    .split('\n')
+    .map((xy, idx) => {
+      const id = idx + 1
+      const [ x, y ] = xy.split(',').map(n => Number(n))
+
+      if(x > grid.maxX) grid.maxX = x
+      if(y > grid.maxY) grid.maxY = y
+
+      grid[`${x}.${y}`] = id
+
+      grid.points.push({ x, y, id })
+
+      grid.pointCount[id] = 1
+    })
+
+  return mostPointsInGridWithEdgesRemoved(fillGrid(grid))
 }
 
 const b = (input) => {

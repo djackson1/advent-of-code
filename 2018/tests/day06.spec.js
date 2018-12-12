@@ -12,20 +12,4 @@ describe(`day ${DAY_NUMBER}`, () => {
       expect(solutions.a(coords)).to.equal(17)
     })
   })
-
-  // describe('part b examples', () => {
-  //   const examples = [
-  //     // { input: 'aA', result: 0 },
-  //     // { input: 'abBA', result: 0 },
-  //     // { input: 'abAB', result: 4 },
-  //     // { input: 'aabAAB', result: 6 },
-  //     { input: 'dabAcCaCBAcCcaDA', result: 4 },
-  //   ]
-
-  //   examples.forEach(({ input, result}, idx) => {
-  //     it(`example ${idx + 1}`, () => {
-  //       expect(solutions.b(input)).to.equal(result)
-  //     })
-  //   })
-  // })
 })
