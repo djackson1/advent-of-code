@@ -92,7 +92,7 @@ const mostPointsInGridWithEdgesRemoved = grid => {
     .sort((a, b) => b[1] - a[1])[0][1]
 }
 
-const a = (coordsString) => {
+const buildGrid = coordsString => {
   const grid = {
     maxX: 0,
     maxY: 0,
@@ -116,13 +116,38 @@ const a = (coordsString) => {
       grid.pointCount[id] = 1
     })
 
+  return grid
+}
+
+const a = (coordsString) => {
+  const grid = buildGrid(coordsString)
+
   return mostPointsInGridWithEdgesRemoved(fillGrid(grid))
 }
 
-const b = (input) => {
-  const split = parseFile(input)
+const calculateSafeGrid = (grid, distanceToBeLessThan) => {
+  const safe = []
+  
+  for(let y = -1000; y <= grid.maxY + 1000; y++){
+    console.log('y', y, 'ymax', grid.maxY + 1000)
+    for(let x = -1000; x <= grid.maxX + 1000; x++){
+      const key = `${x}.${y}`
 
-  return split
+      const dist = grid.points.reduce((acc, { x: x2, y: y2 }) => {
+        return acc + (Math.abs(x2 - x) + Math.abs(y2 - y))
+      }, 0)
+
+      if(dist < distanceToBeLessThan) {
+        safe.push(key)
+      }
+    }
+  }
+
+  return safe.length
+}
+
+const b = (coordsString, distanceToBeLessThan = 10000) => {
+  return calculateSafeGrid(buildGrid(coordsString), distanceToBeLessThan)
 }
 
 module.exports = {
